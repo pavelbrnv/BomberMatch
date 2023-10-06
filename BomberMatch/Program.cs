@@ -28,6 +28,7 @@ var arena = Arena.Build(map7);
 // Walker("Free")
 // Kamikaze("Angry")
 // AtdBomber()
+// TimBomber()
 // Killer()
 // Psycho("Wow")
 
