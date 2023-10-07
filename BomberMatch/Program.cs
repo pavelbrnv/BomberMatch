@@ -31,9 +31,10 @@ var arena = Arena.Build(map7);
 // TimBomber()
 // Killer()
 // Psycho("Wow")
+// Rabkahalla()
 
 var bomber1 = new Psycho("Foo");
-var bomber2 = new Psycho("Bar");
+var bomber2 = new Rabkahalla();
 
 var match = new Match(
 	arena: arena,
