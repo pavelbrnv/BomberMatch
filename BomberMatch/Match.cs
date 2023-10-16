@@ -7,6 +7,15 @@
 		private const int BompPlantingSign = 10;
 		private static readonly TimeSpan BomberActionTimeout = TimeSpan.FromSeconds(3);
 
+		private const int FieldWallCode = -1;
+		private const int FieldEmptyCode = 0;
+
+		private const int MoveNoneCode = 0;
+		private const int MoveUpCode = 1;
+		private const int MoveDownCode = 2;
+		private const int MoveLeftCode = 3;
+		private const int MoveRightCode = 4;
+
 		#endregion
 
 		#region Fields
@@ -74,6 +83,7 @@
 					var availableMoves = arena
 						.GetAvailableBomberMoves(bomber.Name)
 						.Select(ConvertDirectionToCode)
+						.Append(MoveNoneCode)
 						.ToArray();
 
 					try
@@ -137,7 +147,7 @@
 					var field = arena.Fields[i, j];
 					if (field == null)
 					{
-						matrix[i, j] = -1;
+						matrix[i, j] = FieldWallCode;
 					}
 					else
 					{
@@ -147,7 +157,7 @@
 						}
 						else
 						{
-							matrix[i, j] = 0;
+							matrix[i, j] = FieldEmptyCode;
 						}
 
 						foreach (var bomber in field.Bombers)
@@ -193,16 +203,16 @@
 			switch (direction)
 			{
 				case Direction.Up:
-					return 1;
+					return MoveUpCode;
 
 				case Direction.Down:
-					return 2;
+					return MoveDownCode;
 
 				case Direction.Left:
-					return 3;
+					return MoveLeftCode;
 
 				case Direction.Right:
-					return 4;
+					return MoveRightCode;
 
 				default:
 					throw new ArgumentOutOfRangeException(nameof(direction));
@@ -213,19 +223,19 @@
 		{
 			switch (directionCode)
 			{
-				case 1:
+				case MoveUpCode:
 					direction = Direction.Up;
 					return true;
 
-				case 2:
+				case MoveDownCode:
 					direction = Direction.Down;
 					return true;
 
-				case 3:
+				case MoveLeftCode:
 					direction = Direction.Left;
 					return true;
 
-				case 4:
+				case MoveRightCode:
 					direction = Direction.Right;
 					return true;
 
