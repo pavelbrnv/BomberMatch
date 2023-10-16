@@ -5,6 +5,7 @@
 		#region Consts
 
 		private const int BompPlantingSign = 10;
+		private static readonly TimeSpan BomberActionTimeout = TimeSpan.FromSeconds(3);
 
 		#endregion
 
@@ -48,10 +49,17 @@
 		{
 			foreach (var bomber in bombersByNames.Values)
 			{
-				bomber.SetRules(
+				try
+				{
+					bomber.SetRules(
 					matchActionsNumber: (int)matchActionsNumber,
 					detonationRadius: (int)bombDetonationRadius,
 					timeToDetonate: (int)bombTimeToDetonate);
+				}
+				catch (Exception e)
+				{
+					throw new InvalidOperationException($"Unable to bomb! {bomber.Name} crashed while rules setting. {e.Message}");
+				}				
 			}
 
 			for (var actionNumber = 0; actionNumber < matchActionsNumber; actionNumber++)
@@ -68,18 +76,25 @@
 						.Select(ConvertDirectionToCode)
 						.ToArray();
 
-					var bomberActionCode = bomber.Go(arenaMatrix, bombersMatrix, availableMoves);
-
-					if (bomberActionCode >= BompPlantingSign)
+					try
 					{
-						arena.PlantBomb(bomber.Name);
-						bomberActionCode -= BompPlantingSign;
-					}
+						var bomberActionCode = Runner.RunWithTimeout(() => bomber.Go(arenaMatrix, bombersMatrix, availableMoves), BomberActionTimeout);
 
-					if (TryConvertCodeToDirection(bomberActionCode, out var direction))
-					{
-						arena.MoveBomber(bomber.Name, direction);
+						if (bomberActionCode >= BompPlantingSign)
+						{
+							arena.PlantBomb(bomber.Name);
+							bomberActionCode -= BompPlantingSign;
+						}
+
+						if (TryConvertCodeToDirection(bomberActionCode, out var direction))
+						{
+							arena.MoveBomber(bomber.Name, direction);
+						}
 					}
+					catch (Exception e)
+					{
+						return $"{bomber.Name}: {e.Message}";
+					}					
 				}
 
 				arena.Flush();
@@ -156,7 +171,7 @@
 			matrix[0, 1] = mainBomberPoint.j;
 
 			var rowIndex = 1;
-			foreach (var bombersPoint in bombersPoints)
+			foreach (var bombersPoint in bombersPoints.OrderBy(point => point.Key))		// Сортировка для сохранения порядка на разных шагах
 			{
 				if (!string.Equals(bombersPoint.Key, mainBomberName))
 				{
