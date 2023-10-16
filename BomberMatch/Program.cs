@@ -32,6 +32,7 @@ var arena = Arena.Build(map7);
 // Killer()
 // Psycho("Wow")
 // Rabkahalla()
+// AssemblyLoader("BomberRadius.dll")
 
 var bomber1 = new Psycho("Foo");
 var bomber2 = new Rabkahalla();
