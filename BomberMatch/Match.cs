@@ -5,7 +5,7 @@
 		#region Consts
 
 		private const int BompPlantingSign = 10;
-		private static readonly TimeSpan BomberActionTimeout = TimeSpan.FromSeconds(3);
+		private static readonly TimeSpan BomberActionTimeout = TimeSpan.FromSeconds(2);
 
 		private const int FieldWallCode = -1;
 		private const int FieldEmptyCode = 0;
@@ -21,6 +21,7 @@
 		#region Fields
 
 		private readonly Arena arena;
+		private readonly IMatchObserver observer;
 		private readonly Dictionary<string, IBomber> bombersByNames = new();
 		private readonly uint matchActionsNumber;
 		private readonly uint bombDetonationRadius;
@@ -32,12 +33,14 @@
 
 		public Match(
 			Arena arena,
+			IMatchObserver observer,
 			IReadOnlyList<IBomber> bombers,
 			uint matchActionsNumber,
 			uint bombDetonationRadius,
 			uint bombTimeToDetonate)
 		{
 			this.arena = arena;
+			this.observer = observer;
 			this.matchActionsNumber = matchActionsNumber;
 			this.bombDetonationRadius = bombDetonationRadius;
 			this.bombTimeToDetonate = bombTimeToDetonate;
@@ -50,76 +53,82 @@
 			}
 		}
 
-		#endregion
+		#endregion		
 
 		#region Public methods
 
 		public string BombIt()
 		{
-			foreach (var bomber in bombersByNames.Values)
+			observer.StartMatch(bombDetonationRadius, bombTimeToDetonate, arena);
+
+			try
 			{
-				try
+				foreach (var bomber in bombersByNames.Values)
 				{
-					bomber.SetRules(
-					matchActionsNumber: (int)matchActionsNumber,
-					detonationRadius: (int)bombDetonationRadius,
-					timeToDetonate: (int)bombTimeToDetonate);
-				}
-				catch (Exception e)
-				{
-					throw new InvalidOperationException($"Unable to bomb! {bomber.Name} crashed while rules setting. {e.Message}");
-				}				
-			}
-
-			for (var actionNumber = 0; actionNumber < matchActionsNumber; actionNumber++)
-			{
-				GetArenaState(out var arenaMatrix, out var aliveBombersPoints);
-
-				foreach (var bomberName in arena.AliveBombers)
-				{
-					var bomber = GetBomber(bomberName);
-				
-					var bombersMatrix = CreateBombersMatrix(aliveBombersPoints, bomber.Name);
-					var availableMoves = arena
-						.GetAvailableBomberMoves(bomber.Name)
-						.Select(ConvertDirectionToCode)
-						.Append(MoveNoneCode)
-						.ToArray();
-
 					try
 					{
-						var bomberActionCode = Runner.RunWithTimeout(() => bomber.Go(arenaMatrix, bombersMatrix, availableMoves), BomberActionTimeout);
-
-						if (bomberActionCode >= BompPlantingSign)
-						{
-							arena.PlantBomb(bomber.Name);
-							bomberActionCode -= BompPlantingSign;
-						}
-
-						if (TryConvertCodeToDirection(bomberActionCode, out var direction))
-						{
-							arena.MoveBomber(bomber.Name, direction);
-						}
+						bomber.SetRules(
+						matchActionsNumber: (int)matchActionsNumber,
+						detonationRadius: (int)bombDetonationRadius,
+						timeToDetonate: (int)bombTimeToDetonate);
 					}
 					catch (Exception e)
 					{
-						return $"{bomber.Name}: {e.Message}";
-					}					
+						throw new InvalidOperationException($"Unable to bomb! {bomber.Name} crashed while rules setting. {e.Message}");
+					}
 				}
 
-				arena.Flush();
-
-				var aliveBombers = arena.AliveBombers;
-				switch (aliveBombers.Count)
+				for (var actionNumber = 0; actionNumber < matchActionsNumber; actionNumber++)
 				{
-					case 0:
-						return $"Draw! No one survived [action #{actionNumber}]";
-					case 1:
-						return $"The winner is ... {aliveBombers[0]} [action #{actionNumber}]";
-				}
-			}
+					GetArenaState(out var arenaMatrix, out var aliveBombersPoints);
 
-			return "Draw! Timeout";
+					var matchRoundBuilder = new MatchRound.Builder();
+
+					foreach (var bomberName in arena.AliveBombers)
+					{
+						var bomber = GetBomber(bomberName);
+
+						var bombersMatrix = CreateBombersMatrix(aliveBombersPoints, bomber.Name);
+						var availableMoves = arena
+							.GetAvailableBomberMoves(bomber.Name)
+							.Select(ConvertDirectionToCode)
+							.Append(MoveNoneCode)
+							.ToArray();
+
+						try
+						{
+							var bomberActionCode = Runner.RunWithTimeout(() => bomber.Go(arenaMatrix, bombersMatrix, availableMoves), BomberActionTimeout);
+							var bomberDesiredAction = ConvertCodeToAction(bomberActionCode);
+							var bomberRealAction = ApplyBomberAction(bomber.Name, bomberDesiredAction);
+							matchRoundBuilder.AddAction(bomber.Name, bomberDesiredAction, bomberRealAction);
+						}
+						catch (Exception ex)
+						{
+							matchRoundBuilder.AddMistake(bomber.Name, ex);
+						}
+					}
+
+					var matchRound = matchRoundBuilder.Build();
+					observer.AddRound(matchRound);
+
+					arena.Flush();
+
+					var aliveBombers = arena.AliveBombers;
+					switch (aliveBombers.Count)
+					{
+						case 0:
+							return $"Draw! No one survived [action #{actionNumber}]";
+						case 1:
+							return $"The winner is ... {aliveBombers[0]} [action #{actionNumber}]";
+					}
+				}
+
+				return "Draw! Timeout";
+			}
+			finally
+			{
+				observer.EndMatch();
+			}
 		}
 
 		#endregion
@@ -192,6 +201,24 @@
 			}
 
 			return matrix;
+		}		
+
+		private BomberAction ApplyBomberAction(string bomberName, BomberAction desiredAction)
+		{
+			var plantBomb = desiredAction.PlanBomb;
+			Direction? movement = desiredAction.Movement;
+
+			if (plantBomb)
+			{
+				plantBomb = arena.PlantBomb(bomberName);
+			}
+
+			if (movement.HasValue && !arena.MoveBomber(bomberName, movement.Value))
+			{
+				movement = null;
+			}
+
+			return new BomberAction(plantBomb, movement);
 		}
 
 		#endregion
@@ -219,30 +246,41 @@
 			}
 		}
 
-		private static bool TryConvertCodeToDirection(int directionCode, out Direction direction)
+		private static Direction? ConvertCodeToDirection(int directionCode)
 		{
 			switch (directionCode)
 			{
 				case MoveUpCode:
-					direction = Direction.Up;
-					return true;
+					return Direction.Up;
 
 				case MoveDownCode:
-					direction = Direction.Down;
-					return true;
+					return Direction.Down;
 
 				case MoveLeftCode:
-					direction = Direction.Left;
-					return true;
+					return Direction.Left;
 
 				case MoveRightCode:
-					direction = Direction.Right;
-					return true;
+					return Direction.Right;
+
+				case MoveNoneCode:
+					return null;
 
 				default:
-					direction = default(Direction);
-					return false;
+					throw new ArgumentOutOfRangeException($"Unknown direction code '{directionCode}'");
 			}
+		}
+
+		private static BomberAction ConvertCodeToAction(int actionCode)
+		{
+			var plantBomb = actionCode >= BompPlantingSign;
+			if (plantBomb)
+			{
+				actionCode -= BompPlantingSign;
+			}
+
+			var movement = ConvertCodeToDirection(actionCode);
+
+			return new BomberAction(plantBomb, movement);
 		}
 
 		#endregion

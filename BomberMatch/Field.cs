@@ -44,12 +44,15 @@
 
 		#region Public methods
 
-		public void PlantBomb(Bomb bomb)
+		public bool PlantBomb(Bomb bomb)
 		{
-			if (Bomb == null || bomb.TimeToDetonate < Bomb.TimeToDetonate)
+			if (Bomb != null)
 			{
-				Bomb = bomb;
+				return false;
 			}
+
+			Bomb = bomb;
+			return true;
 		}
 		
 		public bool AddBomber(Man bomber)

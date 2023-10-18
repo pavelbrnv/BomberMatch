@@ -25,6 +25,8 @@ var map7 = new int[7, 7]
 
 var arena = Arena.Build(map7);
 
+var observer = new MatchStateDumper();
+
 // Walker("Free")
 // Kamikaze("Angry")
 // AtdBomber()
@@ -39,6 +41,7 @@ var bomber2 = new Rabkahalla();
 
 var match = new Match(
 	arena: arena,
+	observer: observer,
 	bombers: new IBomber[] { new Voyeur(bomber1), bomber2 },
 	matchActionsNumber: 1000,
 	bombDetonationRadius: 2,

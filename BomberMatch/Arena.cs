@@ -116,7 +116,7 @@ namespace BomberMatch
 			return availableMoves;
 		}
 
-		public void MoveBomber(string bomberName, Direction direction)
+		public bool MoveBomber(string bomberName, Direction direction)
 		{
 			var bomber = GetBomber(bomberName);
 
@@ -145,23 +145,24 @@ namespace BomberMatch
 			}
 			if (newBomberField == null)
 			{
-				throw new InvalidOperationException($"Unable to move {bomberName} to {direction} direction");
+				return false;
 			}
 
 			currentBomberField.RemoveBomber(bomber);
 			newBomberField.AddBomber(bomber);
 
 			bomber.MoveToField(newBomberField);
+			return true;
 		}
 
-		public void PlantBomb(string bomberName)
+		public bool PlantBomb(string bomberName)
 		{
 			var bomber = GetBomber(bomberName);
 
 			ThrowIfBomberIsDead(bomber);
 
 			var bomb = bomber.GetBomb();
-			bomber.CurrentField.PlantBomb(bomb);
+			return bomber.CurrentField.PlantBomb(bomb);
 		}
 
 		public void Flush()
