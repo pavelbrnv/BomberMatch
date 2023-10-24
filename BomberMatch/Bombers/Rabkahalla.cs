@@ -19,7 +19,7 @@ namespace BomberMatch.Bombers
 
         private BomberState currentState = BomberState.FIND;
         private BomberState newState = BomberState.FIND;
-        public string Name => "!Rabkahalla";
+        public string Name => "Rabkahalla";
 
         public int Go(int[,] arena, int[,] bombers, int[] availableActions)
         {
@@ -28,6 +28,20 @@ namespace BomberMatch.Bombers
             int result = 0;
 
             var target = ClosestTarget(arena, enemies, self);
+            if (enemies.Count > 1)
+            {
+                if (target.Item2.Count > 1)
+                {
+                    var dir = ReverseDirection(GetDirection(self, target.Item2[1]));
+                    if (availableActions.Contains(dir))
+                    {
+                        return dir;
+                    }
+                }
+
+                result += GetSafeDirection(arena, self, availableActions);
+                return result;
+            }
             if (target.Item2.Count == 1 || target.Item2.Count == 2)
             {
                 result += 10;

@@ -22,7 +22,7 @@
 
 		private readonly Arena arena;
 		private readonly IMatchObserver observer;
-		private readonly Dictionary<string, IBomber> bombersByNames = new();
+		private readonly Dictionary<string, BomberProxy> bombersByNames = new();
 		private readonly uint matchActionsNumber;
 		private readonly uint bombDetonationRadius;
 		private readonly uint bombTimeToDetonate;
@@ -45,7 +45,7 @@
 			this.bombDetonationRadius = bombDetonationRadius;
 			this.bombTimeToDetonate = bombTimeToDetonate;
 
-			bombersByNames = bombers.ToDictionary(bomber => bomber.Name, bomber => bomber);
+			bombersByNames = bombers.ToDictionary(bomber => bomber.Name, bomber => new BomberProxy(bomber));
 
 			foreach (var bomber in bombers)
 			{
@@ -57,13 +57,13 @@
 
 		#region Public methods
 
-		public string BombIt()
+		public MatchResult BombIt()
 		{
 			observer.StartMatch(bombDetonationRadius, bombTimeToDetonate, arena);
 
 			try
 			{
-				foreach (var bomber in bombersByNames.Values)
+				foreach (var bomber in GetAllBombers())
 				{
 					try
 					{
@@ -78,11 +78,14 @@
 					}
 				}
 
-				for (var actionNumber = 0; actionNumber < matchActionsNumber; actionNumber++)
+				var deadBombers = new HashSet<string>();
+				var matchResultBuilder = new MatchResult.Builder();
+
+				for (var actionNumber = 1; actionNumber <= matchActionsNumber; actionNumber++)
 				{
 					GetArenaState(out var arenaMatrix, out var aliveBombersPoints);
 
-					var matchRoundBuilder = new MatchRound.Builder();
+					var matchRoundBuilder = new MatchRound.Builder($"#{actionNumber}");
 
 					foreach (var bomberName in arena.AliveBombers)
 					{
@@ -101,29 +104,50 @@
 							var bomberDesiredAction = ConvertCodeToAction(bomberActionCode);
 							var bomberRealAction = ApplyBomberAction(bomber.Name, bomberDesiredAction);
 							matchRoundBuilder.AddAction(bomber.Name, bomberDesiredAction, bomberRealAction);
+
+							if (bomber.Suicide)
+							{
+								matchRoundBuilder.AddMistake(bomber.Name, new Exception("This is SUICIDE!"));
+							}
 						}
 						catch (Exception ex)
 						{
-							matchRoundBuilder.AddMistake(bomber.Name, ex);
+							bomber.AddPenalty();
+							matchRoundBuilder.AddMistake(bomber.Name, ex);							
+						}
+					}								
+
+					arena.Flush();
+
+					foreach (var bomber in arena.DeadBombers)
+					{
+						if (deadBombers.Add(bomber))
+						{
+							matchRoundBuilder.AddKilledBomber(bomber);
+							matchResultBuilder.AddBomberResult(bomber, false, actionNumber);
 						}
 					}
 
 					var matchRound = matchRoundBuilder.Build();
 					observer.AddRound(matchRound);
 
-					arena.Flush();
-
 					var aliveBombers = arena.AliveBombers;
 					switch (aliveBombers.Count)
 					{
 						case 0:
-							return $"Draw! No one survived [action #{actionNumber}]";
+							return matchResultBuilder.Build();
+
 						case 1:
-							return $"The winner is ... {aliveBombers[0]} [action #{actionNumber}]";
+							matchResultBuilder.AddBomberResult(aliveBombers[0], true, actionNumber);
+							return matchResultBuilder.Build();
 					}
 				}
 
-				return "Draw! Timeout";
+				foreach (var bomber in arena.AliveBombers)
+				{
+					matchResultBuilder.AddBomberResult(bomber, true, (int)matchActionsNumber);
+				}
+				return matchResultBuilder.Build();
 			}
 			finally
 			{
@@ -135,7 +159,12 @@
 
 		#region Private methods
 
-		private IBomber GetBomber(string bomberName)
+		private IReadOnlyCollection<BomberProxy> GetAllBombers()
+		{
+			return bombersByNames.Values;
+		}
+
+		private BomberProxy GetBomber(string bomberName)
 		{
 			if (!bombersByNames.TryGetValue(bomberName, out var bomber))
 			{
@@ -291,6 +320,54 @@
 		{
 			public int i;
 			public int j;
+		}
+
+		private sealed class BomberProxy : IBomber
+		{
+			private readonly IBomber bomber;
+			private int activePenalties;
+			private int totalPenalties;
+
+			public BomberProxy(IBomber bomber)
+			{
+				this.bomber = bomber;
+			}
+
+			public bool HasPenalties => activePenalties > 0;
+
+			public bool Suicide => totalPenalties > 2;
+
+			public string Name => bomber.Name;
+
+			public void SetRules(int matchActionsNumber, int detonationRadius, int timeToDetonate)
+			{
+				bomber.SetRules(matchActionsNumber, detonationRadius, timeToDetonate);
+			}
+
+			public int Go(int[,] arena, int[,] bombers, int[] availableMoves)
+			{
+				if (Suicide)
+				{
+					// Самоубийство
+					activePenalties--;
+					return 10;
+				}
+
+				if (HasPenalties)
+				{
+					// Пропуск хода
+					activePenalties--;
+					return 0;
+				}
+
+				return bomber.Go(arena, bombers, availableMoves);
+			}
+
+			public void AddPenalty()
+			{
+				totalPenalties++;
+				activePenalties = totalPenalties * 2;
+			}
 		}
 
 		#endregion

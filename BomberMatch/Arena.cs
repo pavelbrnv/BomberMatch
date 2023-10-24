@@ -1,6 +1,4 @@
-﻿using System.Drawing;
-
-namespace BomberMatch
+﻿namespace BomberMatch
 {
 	public sealed class Arena
 	{
@@ -67,7 +65,13 @@ namespace BomberMatch
 				.Where(bomber => bomber.IsAlive)
 				.Select(bomber => bomber.Name)
 				.ToArray();
-		
+
+		public IReadOnlyList<string> DeadBombers =>
+			bombers.Values
+				.Where(bomber => !bomber.IsAlive)
+				.Select(bomber => bomber.Name)
+				.ToArray();
+
 		#endregion
 
 		#region Public methods

@@ -1,52 +1,58 @@
 ﻿using BomberMatch;
-using BomberMatch.Bombers;
 
-// 0 - пустота
-// 1 - поле без респауна
-// 2 - поле с респауном
-var map5 = new int[5, 5]
+var championship = new Championship();
+
+var maps = new[]
 {
-	{ 2, 1, 1, 1, 1 },
-	{ 1, 0, 1, 0, 1 },
-	{ 1, 1, 1, 1, 1 },
-	{ 1, 0, 1, 0, 1 },
-	{ 1, 1, 1, 1, 2 }
-};
-var map7 = new int[7, 7]
-{
-	{ 2, 1, 1, 1, 1, 1, 1 },
-	{ 1, 0, 1, 0, 1, 0, 1 },
-	{ 1, 1, 1, 1, 1, 1, 1 },
-	{ 1, 0, 1, 0, 1, 0, 1 },
-	{ 1, 1, 1, 1, 1, 1, 1 },
-	{ 1, 0, 1, 0, 1, 0, 1 },
-	{ 1, 1, 1, 1, 1, 1, 2 }
+	Maps.Classic7x7B2,
+	Maps.Andromeda17x17B4
 };
 
-var arena = Arena.Build(map7);
+var gameIndex = 1;
+for (var i = 0; i < BombersFactory.Creators.Count - 1; i++)
+{
+	for (var j = i + 1; j < BombersFactory.Creators.Count; j++)
+	{
+		foreach (var map in maps)
+		{
+			for (var n = 0; n < 2; n++)
+			{
+				var bomber1 = BombersFactory.Creators[i].Invoke();
+				var bomber2 = BombersFactory.Creators[j].Invoke();
 
-var observer = new MatchStateDumper();
+				var arena = Arena.Build(map);
 
-// Walker("Free")
-// Kamikaze("Angry")
-// AtdBomber()
-// TimBomber()
-// Killer()
-// Psycho("Wow")
-// Rabkahalla()
-// AssemblyLoader("BomberRadius.dll")
+				Console.Write($"#{gameIndex}: {bomber1.Name} vs {bomber2.Name}...  ");
 
-var bomber1 = new Psycho("Foo");
-var bomber2 = new Rabkahalla();
+				using (var observer = new MatchStateDumper($"game_{gameIndex}_{bomber1.Name}_{bomber2.Name}"))
+				{
+					var match = new Match(
+							arena: arena,
+							observer: observer,
+							bombers: new IBomber[] { bomber1, bomber2 },
+							matchActionsNumber: 1000,
+							bombDetonationRadius: 2,
+							bombTimeToDetonate: 4);
 
-var match = new Match(
-	arena: arena,
-	observer: observer,
-	bombers: new IBomber[] { new Voyeur(bomber1), bomber2 },
-	matchActionsNumber: 1000,
-	bombDetonationRadius: 2,
-	bombTimeToDetonate: 4);
+					try
+					{
+						var result = match.BombIt();
+						championship.AddMatchResult(result);
 
-var result = match.BombIt();
+						Console.WriteLine(result);
+					}
+					catch (Exception ex)
+					{
+						Console.WriteLine($"ERROR: {ex.Message}");
+					}					
+				}
 
-Console.Write(result);
+				gameIndex++;
+			}
+		}
+	}
+}
+
+Console.WriteLine(string.Empty);
+Console.WriteLine("--- CHAMPIONSHIP RESULTS ---");
+Console.WriteLine(championship);

@@ -40,22 +40,37 @@
 
 	public sealed class MatchRound
 	{
-		public MatchRound(IReadOnlyList<BomberValidatedAction> validatedActions, IReadOnlyList<BomberMistake> mistakes)
+		public MatchRound(string description, IReadOnlyList<BomberValidatedAction> validatedActions, IReadOnlyList<BomberMistake> mistakes, IReadOnlyList<string> killedBombers)
 		{
+			Description = description;
 			ValidatedActions = validatedActions;
 			Mistakes = mistakes;
+			KilledBombers = killedBombers;
 		}
+
+		public string Description { get; }
 
 		public IReadOnlyList<BomberValidatedAction> ValidatedActions { get; }		
 
 		public IReadOnlyList<BomberMistake> Mistakes { get; }
 
+		public IReadOnlyList<string> KilledBombers { get; }
+
 		#region Nested
 
 		public sealed class Builder
 		{
+			private readonly string description;
+
 			private readonly List<BomberValidatedAction> validatedActions = new();
 			private readonly List<BomberMistake> mistakes = new();
+			private readonly List<string> killedBombers = new();
+
+
+			public Builder(string description)
+			{
+				this.description = description;
+			}
 
 			public void AddAction(BomberValidatedAction action)
 			{
@@ -77,9 +92,14 @@
 				AddMistake(new BomberMistake(bomberName, mistake));
 			}
 
+			public void AddKilledBomber(string bomberName)
+			{
+				killedBombers.Add(bomberName);
+			}
+
 			public MatchRound Build()
 			{
-				return new MatchRound(validatedActions, mistakes);
+				return new MatchRound(description, validatedActions, mistakes, killedBombers);
 			}
 		}
 

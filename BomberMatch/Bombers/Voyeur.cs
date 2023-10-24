@@ -50,6 +50,8 @@
         public void SetRules(int matchActionsNumber, int detonationRadius, int timeToDetonate)
         {
             //I take no rules! 
+
+            bomber.SetRules(matchActionsNumber, detonationRadius, timeToDetonate);
         }
 
         public int Go(int[,] arena, int[,] bombers, int[] availableMoves)

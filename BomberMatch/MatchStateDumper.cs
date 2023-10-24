@@ -1,6 +1,6 @@
 ﻿namespace BomberMatch
 {
-	public sealed class MatchStateDumper : IMatchObserver
+	public sealed class MatchStateDumper : IMatchObserver, IDisposable
 	{
 		private readonly string fileName;
 
@@ -98,6 +98,16 @@
 			}
 			
 			sw.Flush();
+
+			foreach (var mistake in round.Mistakes)
+			{
+				LogMistake(mistake);
+			}
+		}
+
+		private void LogMistake(BomberMistake mistake)
+		{
+			Console.WriteLine($"{mistake.BomberName}: {mistake.Mistake.Message}");
 		}
 
 		public void EndMatch()
@@ -107,6 +117,11 @@
 				sw.Close();
 				sw = null;
 			}
+		}
+
+		public void Dispose()
+		{
+			EndMatch();
 		}
 	}
 }
