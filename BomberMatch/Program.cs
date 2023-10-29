@@ -32,7 +32,8 @@ for (var i = 0; i < BombersFactory.Creators.Count - 1; i++)
 							bombers: new IBomber[] { bomber1, bomber2 },
 							matchActionsNumber: 1000,
 							bombDetonationRadius: 2,
-							bombTimeToDetonate: 4);
+							bombTimeToDetonate: 4,
+							bomberActionTimeout: TimeSpan.FromSeconds(2));
 
 					try
 					{

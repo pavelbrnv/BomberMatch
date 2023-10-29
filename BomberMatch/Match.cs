@@ -5,7 +5,6 @@
 		#region Consts
 
 		private const int BompPlantingSign = 10;
-		private static readonly TimeSpan BomberActionTimeout = TimeSpan.FromSeconds(2);
 
 		private const int FieldWallCode = -1;
 		private const int FieldEmptyCode = 0;
@@ -26,6 +25,7 @@
 		private readonly uint matchActionsNumber;
 		private readonly uint bombDetonationRadius;
 		private readonly uint bombTimeToDetonate;
+		private readonly TimeSpan bomberActionTimeout;
 
 		#endregion
 
@@ -37,13 +37,15 @@
 			IReadOnlyList<IBomber> bombers,
 			uint matchActionsNumber,
 			uint bombDetonationRadius,
-			uint bombTimeToDetonate)
+			uint bombTimeToDetonate,
+			TimeSpan bomberActionTimeout)
 		{
 			this.arena = arena;
 			this.observer = observer;
 			this.matchActionsNumber = matchActionsNumber;
 			this.bombDetonationRadius = bombDetonationRadius;
 			this.bombTimeToDetonate = bombTimeToDetonate;
+			this.bomberActionTimeout = bomberActionTimeout;
 
 			bombersByNames = bombers.ToDictionary(bomber => bomber.Name, bomber => new BomberProxy(bomber));
 
@@ -100,7 +102,7 @@
 
 						try
 						{
-							var bomberActionCode = Runner.RunWithTimeout(() => bomber.Go(arenaMatrix, bombersMatrix, availableMoves), BomberActionTimeout);
+							var bomberActionCode = Runner.RunWithTimeout(() => bomber.Go(arenaMatrix, bombersMatrix, availableMoves), bomberActionTimeout);
 							var bomberDesiredAction = ConvertCodeToAction(bomberActionCode);
 							var bomberRealAction = ApplyBomberAction(bomber.Name, bomberDesiredAction);
 							matchRoundBuilder.AddAction(bomber.Name, bomberDesiredAction, bomberRealAction);
