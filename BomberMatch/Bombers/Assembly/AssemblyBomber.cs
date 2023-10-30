@@ -1,25 +1,25 @@
 ﻿using System.Reflection;
 
-namespace BomberMatch.Bombers
+namespace BomberMatch.Bombers.Assembly
 {
-	public sealed class AssemblyLoader : IBomber
+    public sealed class AssemblyBomber : IBomber
     {
-		private Assembly ass;
-		private PropertyInfo name;
-		private MethodInfo setRules;
-		private MethodInfo go;
-		private object instance;
+        private System.Reflection.Assembly ass;
+        private PropertyInfo name;
+        private MethodInfo setRules;
+        private MethodInfo go;
+        private object instance;
 
-		public AssemblyLoader(string fileName)
+        public AssemblyBomber(string fileName)
         {
-            ass = Assembly.LoadFrom(fileName);
+            ass = System.Reflection.Assembly.LoadFrom(fileName);
 
             var allTypes = ass.GetExportedTypes();
             if (allTypes.Length == 0)
             {
-				throw new Exception($"No public types in assembly {fileName}");
-			}
-                
+                throw new Exception($"No public types in assembly {fileName}");
+            }
+
             foreach (var type in allTypes)
             {
                 name = type.GetProperty("Name", typeof(string));
@@ -30,16 +30,16 @@ namespace BomberMatch.Bombers
                     || setRules == null || setRules.ReturnType != typeof(void)
                     || go == null || go.ReturnType != typeof(int))
                 {
-					continue;
-				}
-                    
+                    continue;
+                }
+
                 instance = Activator.CreateInstance(type);
                 break;
             }
             if (instance == null)
             {
-				throw new Exception("Can't find proper type");
-			}                
+                throw new Exception("Can't find proper type");
+            }
         }
 
         public string Name => (string)name.GetValue(instance);
@@ -52,6 +52,6 @@ namespace BomberMatch.Bombers
         public int Go(int[,] arena, int[,] bombers, int[] availableActions)
         {
             return (int)go.Invoke(instance, new object[] { arena, bombers, availableActions });
-        }        
+        }
     }
 }

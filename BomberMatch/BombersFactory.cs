@@ -1,21 +1,52 @@
-﻿using BomberMatch.Bombers;
-using BomberMatch.Bombers.Razbomber;
-
-namespace BomberMatch
+﻿namespace BomberMatch
 {
 	public static class BombersFactory
 	{
-		public delegate IBomber BomberCreator();
+		private static readonly Dictionary<string, IBomberFactory> factoriesMap;
 
-		public static readonly IReadOnlyList<BomberCreator> Creators = new BomberCreator[]
+		static BombersFactory()
 		{
-			() => new Pt4k(),
-			() => new Razbomber(),
-			() => new TimBomber(),
-			() => new Killer(),
-			() => new Psycho("Redneck"),
-			() => new Rabkahalla(),
-			() => new AssemblyLoader("BomberRadius.dll")
-		};
+			factoriesMap = BombersRegister.Factories.ToDictionary(factory => factory.Name, factory => factory);
+		}
+
+		public static IReadOnlyCollection<string> GetBombersNames()
+		{
+			return factoriesMap.Keys;
+		}
+
+		public static int GetBombersCount()
+		{
+			return factoriesMap.Count;
+		}
+
+		public static IBomber CreateBomber(string bomberName, string parameter)
+		{
+			return factoriesMap[bomberName].Create(parameter);
+		}
+	}
+
+	public interface IBomberFactory
+	{
+		string Name { get; }
+
+		IBomber Create(string parameter);
+	}
+
+	public sealed class BomberFactory<T> : IBomberFactory
+		where T : IBomber
+	{
+		private readonly Func<string, T> create;
+
+		public BomberFactory(Func<string, T> create)
+		{
+			this.create = create;
+		}
+
+		public string Name => typeof(T).Name;
+
+		public IBomber Create(string parameter)
+		{
+			return create(parameter);
+		}
 	}
 }

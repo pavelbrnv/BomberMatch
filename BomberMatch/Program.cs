@@ -8,17 +8,19 @@ var maps = new[]
 	Maps.Andromeda17x17B4
 };
 
+var bombersNames = BombersFactory.GetBombersNames().ToArray();
+
 var gameIndex = 1;
-for (var i = 0; i < BombersFactory.Creators.Count - 1; i++)
+for (var i = 0; i < bombersNames.Length - 1; i++)
 {
-	for (var j = i + 1; j < BombersFactory.Creators.Count; j++)
+	for (var j = i + 1; j < bombersNames.Length; j++)
 	{
 		foreach (var map in maps)
 		{
 			for (var n = 0; n < 2; n++)
 			{
-				var bomber1 = BombersFactory.Creators[i].Invoke();
-				var bomber2 = BombersFactory.Creators[j].Invoke();
+				var bomber1 = BombersFactory.CreateBomber(bombersNames[i], string.Empty);
+				var bomber2 = BombersFactory.CreateBomber(bombersNames[j], string.Empty);
 
 				var arena = Arena.Build(map);
 
