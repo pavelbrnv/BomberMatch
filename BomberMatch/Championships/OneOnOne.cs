@@ -22,21 +22,21 @@
 			this.createMatchObserver = createMatchObserver;
 		}
 
-		public void Bomb(IReadOnlyList<string> mapsNames, IReadOnlyList<BomberDescriptor> bombers)
+		public void Bomb(IReadOnlyList<string> mapsNames, IReadOnlyList<BomberDescriptor> bombersDescriptors)
 		{
 			var series = new SeriesRating();
 
 			var gameIndex = 1;
-			for (var i = 0; i < bombers.Count - 1; i++)
+			for (var i = 0; i < bombersDescriptors.Count - 1; i++)
 			{
-				for (var j = i + 1; j < bombers.Count; j++)
+				for (var j = i + 1; j < bombersDescriptors.Count; j++)
 				{
 					foreach (var mapName in mapsNames)
 					{
 						for (var n = 0; n < 2; n++)
 						{
-							var bomber1 = BombersFactory.CreateBomber(bombers[i]);
-							var bomber2 = BombersFactory.CreateBomber(bombers[j]);
+							var bomber1 = BombersFactory.CreateBomber(bombersDescriptors[i]);
+							var bomber2 = BombersFactory.CreateBomber(bombersDescriptors[j]);
 
 							if (n % 2 == 1)
 							{
@@ -50,13 +50,13 @@
 							using (var observer = createMatchObserver(gameIndex, mapName, bomber1.Name, bomber2.Name))
 							{
 								var match = new Match(
-										arena: arena,
-										observer: observer,
-										bombers: new IBomber[] { bomber1, bomber2 },
-										matchActionsNumber: matchActionsNumber,
-										bombDetonationRadius: bombDetonationRadius,
-										bombTimeToDetonate: bombTimeToDetonate,
-										bomberActionTimeout: bomberActionTimeout);
+									arena: arena,
+									observer: observer,
+									bombers: new IBomber[] { bomber1, bomber2 },
+									matchActionsNumber: matchActionsNumber,
+									bombDetonationRadius: bombDetonationRadius,
+									bombTimeToDetonate: bombTimeToDetonate,
+									bomberActionTimeout: bomberActionTimeout);
 
 								try
 								{
@@ -78,7 +78,7 @@
 			}
 
 			Console.WriteLine(string.Empty);
-			Console.WriteLine("--- CHAMPIONSHIP RESULTS ---");
+			Console.WriteLine("--- ONE ON ONE CHAMPIONSHIP RESULTS ---");
 			Console.WriteLine(series);
 		}
 	}
