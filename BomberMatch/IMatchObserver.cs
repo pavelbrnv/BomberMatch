@@ -1,6 +1,6 @@
 ﻿namespace BomberMatch
 {
-	public interface IMatchObserver
+	public interface IMatchObserver : IDisposable
 	{
 		void StartMatch(uint bombDetonationRadius, uint bombTimeToDetonate, Arena arena);
 
@@ -8,6 +8,8 @@
 
 		void EndMatch();
 	}
+
+	public delegate IMatchObserver MatchObserverCreator(int index, string mapName, params string[] bombersNames);
 
 	public sealed class BomberValidatedAction
 	{

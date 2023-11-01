@@ -1,6 +1,8 @@
-﻿namespace BomberMatch
+﻿using BomberMatch.Utils;
+
+namespace BomberMatch
 {
-	public sealed class Match
+    public sealed class Match
 	{
 		#region Consts
 

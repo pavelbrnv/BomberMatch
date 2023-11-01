@@ -23,6 +23,24 @@
 		{
 			return factoriesMap[bomberName].Create(parameter);
 		}
+
+		public static IBomber CreateBomber(BomberDescriptor descriptor)
+		{
+			return CreateBomber(descriptor.BomberName, descriptor.Parameter);
+		}
+	}
+
+	public sealed class BomberDescriptor
+	{
+		public string BomberName { get; }		
+
+		public string Parameter { get; }
+
+		public BomberDescriptor(string bomberName, string parameter)
+		{
+			BomberName = bomberName;
+			Parameter = parameter;
+		}
 	}
 
 	public interface IBomberFactory
