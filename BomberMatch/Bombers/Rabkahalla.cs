@@ -28,20 +28,6 @@ namespace BomberMatch.Bombers
             int result = 0;
 
             var target = ClosestTarget(arena, enemies, self);
-            if (enemies.Count > 1)
-            {
-                if (target.Item2.Count > 1)
-                {
-                    var dir = ReverseDirection(GetDirection(self, target.Item2[1]));
-                    if (availableActions.Contains(dir))
-                    {
-                        return dir;
-                    }
-                }
-
-                result += GetSafeDirection(arena, self, availableActions);
-                return result;
-            }
             if (target.Item2.Count == 1 || target.Item2.Count == 2)
             {
                 result += 10;
@@ -49,14 +35,14 @@ namespace BomberMatch.Bombers
             }
             else if (target.Item2.Count > 2)
             {
-                var direction= GetDirection(self, target.Item2[1]);
-                if  (availableActions.Contains(direction))
+                var direction = GetDirection(self, target.Item2[1]);
+                if (availableActions.Contains(direction))
                 {
                     result += direction;
                 }
                 else
                 {
-                    result+= GetSafeDirection(arena, self, availableActions);
+                    result += GetSafeDirection(arena, self, availableActions);
                 }
             }
             else
@@ -75,7 +61,7 @@ namespace BomberMatch.Bombers
             this.maxActionsNumber = maxActionsNumber;
         }
 
-        private int GetSafeDirection(int[,] arena,Position self,int[] availableActions)
+        private int GetSafeDirection(int[,] arena, Position self, int[] availableActions)
         {
             int radius = detonationRadius;
             while (radius > 0)
@@ -96,7 +82,7 @@ namespace BomberMatch.Bombers
             }
             return 0;
         }
-        
+
 
         private List<Position> GetEnemies(int[,] bombers)
         {
@@ -109,7 +95,7 @@ namespace BomberMatch.Bombers
             return result;
         }
 
-        private Position GetPosition(Position self,int action)
+        private Position GetPosition(Position self, int action)
         {
             switch (action)
             {
@@ -154,13 +140,13 @@ namespace BomberMatch.Bombers
             };
         }
 
-        private Tuple<Position,List<Position>> ClosestTarget(int[,] arena,List<Position> enemies, Position self) 
+        private Tuple<Position, List<Position>> ClosestTarget(int[,] arena, List<Position> enemies, Position self)
         {
-            List<Position> targetPath=new List<Position>();
+            List<Position> targetPath = new List<Position>();
             Position target = new Position(0, 0);
             foreach (var position in enemies)
             {
-                var path = FindPath(arena,self, position);
+                var path = FindPath(arena, self, position);
                 if (targetPath.Count == 0 || targetPath.Count > path.Count)
                 {
                     targetPath = path;
@@ -169,7 +155,7 @@ namespace BomberMatch.Bombers
             }
             return new Tuple<Position, List<Position>>(target, targetPath);
         }
-        
+
 
         private List<Position> FindPath(int[,] arena, Position start, Position goal)
         {
@@ -192,13 +178,13 @@ namespace BomberMatch.Bombers
                 {
                     return GetPathForNode(currentNode);
                 }
-               
+
                 openSet.Remove(currentNode);
                 closedSet.Add(currentNode);
-               
+
                 foreach (var neighbourNode in GetNeighbours(currentNode, goal, arena))
                 {
-                   
+
                     if (closedSet.Count(node => node.Position == neighbourNode.Position) > 0)
                         continue;
                     var openNode = openSet.FirstOrDefault(node => node.Position == neighbourNode.Position);
@@ -235,7 +221,7 @@ namespace BomberMatch.Bombers
             return result;
         }
 
-        private List<PathNode> GetNeighbours(PathNode pathNode,Position goal, int[,] area)
+        private List<PathNode> GetNeighbours(PathNode pathNode, Position goal, int[,] area)
         {
             var result = new List<PathNode>();
 
@@ -243,15 +229,15 @@ namespace BomberMatch.Bombers
 
             foreach (var point in neighbourPoints)
             {
-               
+
                 if (point.X < 0 || point.X >= area.GetLength(0))
                     continue;
                 if (point.Y < 0 || point.Y >= area.GetLength(1))
                     continue;
 
-                if ((area[point.X, point.Y] != 0) || IsDangerous(area, point,detonationRadius))
+                if ((area[point.X, point.Y] != 0) || IsDangerous(area, point, detonationRadius))
                     continue;
-                
+
                 var neighbourNode = new PathNode()
                 {
                     Position = point,
@@ -271,9 +257,9 @@ namespace BomberMatch.Bombers
             for (int i = 0; i < neighbourPoints.Length; i = i + 4)
             {
                 neighbourPoints[i] = new Position(checkNode.X + i / 4 + 1, checkNode.Y);
-                neighbourPoints[i+1] = new Position(checkNode.X - i / 4 - 1, checkNode.Y);
-                neighbourPoints[i+2] = new Position(checkNode.X, checkNode.Y + i / 4 + 1);
-                neighbourPoints[i+3] = new Position(checkNode.X, checkNode.Y - i / 4 - 1);
+                neighbourPoints[i + 1] = new Position(checkNode.X - i / 4 - 1, checkNode.Y);
+                neighbourPoints[i + 2] = new Position(checkNode.X, checkNode.Y + i / 4 + 1);
+                neighbourPoints[i + 3] = new Position(checkNode.X, checkNode.Y - i / 4 - 1);
             }
             foreach (var point in neighbourPoints)
             {
@@ -281,10 +267,40 @@ namespace BomberMatch.Bombers
                     continue;
                 if (point.Y < 0 || point.Y >= area.GetLength(1))
                     continue;
-                if ((area[point.Y, point.X] >0))
+                if ((area[point.Y, point.X] > 0))
                     return true;
             }
+
+            if (IsDeadEnd(area, checkNode))
+            {
+                return true;
+            }
+
             return false;
+        }
+
+        private bool IsDeadEnd(int[,] area, Position checkNode)
+        {
+            Position[] neighbourPoints = new Position[4];
+            neighbourPoints[0] = new Position(checkNode.X + 1, checkNode.Y);
+            neighbourPoints[1] = new Position(checkNode.X - 1, checkNode.Y);
+            neighbourPoints[2] = new Position(checkNode.X, checkNode.Y + 1);
+            neighbourPoints[3] = new Position(checkNode.X, checkNode.Y - 1);
+
+            int count = 0;
+            for (int i = 0; i < neighbourPoints.Length; i++)
+            {
+                if (neighbourPoints[i].X < 0 || neighbourPoints[i].X >= area.GetLength(0) || neighbourPoints[i].Y < 0 || neighbourPoints[i].Y >= area.GetLength(1) || area[neighbourPoints[i].Y, neighbourPoints[i].X] != 0)
+                {
+                    count++;
+                }
+            }
+
+            if (count >= 3) return true;
+            return false;
+
+
+
         }
         private static Position[] GetNearPositions(PathNode checkNode)
         {
