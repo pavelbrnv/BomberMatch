@@ -1,5 +1,6 @@
 ﻿using BomberMatch.Bombers;
 using BomberMatch.Bombers.Assembly;
+using BomberMatch.Bombers.C;
 using BomberMatch.Bombers.Js;
 using BomberMatch.Bombers.Python;
 using BomberMatch.Bombers.Razbomber;
@@ -21,6 +22,7 @@ namespace BomberMatch
 			new BomberFactory<Walker>(parameter => new Walker(parameter)),
 
 			new BomberFactory<AssemblyBomber>(parameter => new AssemblyBomber(parameter)),
+			new BomberFactory<CBomber>(parameter => new CBomber(parameter)),
 			new BomberFactory<PythonBomber>(parameter => new PythonBomber(parameter)),
 			new BomberFactory<JsBomber>(parameter => new JsBomber(parameter))
 		};
