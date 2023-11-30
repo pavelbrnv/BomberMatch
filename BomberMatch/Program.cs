@@ -11,10 +11,9 @@ var maps = new[]
 
 var bombers = new[]
 {
-	new BomberDescriptor("Pt4k", ""),
-	new BomberDescriptor("TimBomber", ""),
-	new BomberDescriptor("Rabkahalla", ""),
-	new BomberDescriptor("PythonBomber", "cobra.py")
+	new BomberDescriptor("Psycho", "42"),
+	new BomberDescriptor("Kamikaze", "18"),
+	new BomberDescriptor("PythonBomber", "demo.py")
 };
 
 var one = new OneOnOne(
