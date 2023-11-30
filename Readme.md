@@ -15,11 +15,11 @@
 <b>Как написать бота</b>
 
 Участвовать могут боты, которые написаны на разных языках программирования:
-- C# - нужно реализовать интерфейс IBomber. В комментариях указана вся подробная информация.
+- C# - нужно реализовать интерфейс [IBomber](https://github.com/pavelbrnv/BomberMatch/blob/master/BomberMatch/IBomber.cs). В комментариях указана вся подробная информация.
 
 Через адаптеры в игре могут участвовать боты на:
-- JS - пример бота, который поможет в реализации в файле /BomberMatch/Bombers/Js/demo.js
-- Python - пример бота, который поможет в реализации в файле /BomberMatch/Bombers/Python/demo.py
+- JS - пример бота в файле [demo.js](https://github.com/pavelbrnv/BomberMatch/blob/master/BomberMatch/Bombers/Js/demo.js)
+- Python - пример бота в файле [demo.py](https://github.com/pavelbrnv/BomberMatch/blob/master/BomberMatch/Bombers/Python/demo.py)
 
 Реализации ботов присылайте в ТГ https://t.me/MargaritaLazko
 В сопроводительном сообщении обязательно укажите "Bomberman ИТМО" и ваш контакт, по которому можно связаться.
