@@ -18,7 +18,7 @@
 - C# - нужно реализовать интерфейс [IBomber](https://github.com/pavelbrnv/BomberMatch/blob/master/BomberMatch/IBomber.cs). В комментариях указана вся подробная информация.
 
 Через адаптеры в игре могут участвовать боты на:
-- C++ - нужно собрать dll в соответсвии с заголовочным файлом [BomberNat.h](https://github.com/pavelbrnv/BomberMatch/blob/master/BomberMatch/Bombers/C/BomberNat.h)
+- C++ - нужно сделать реализацию в соответсвии с заголовочным файлом [BomberNat.h](https://github.com/pavelbrnv/BomberMatch/blob/master/BomberMatch/Bombers/C/BomberNat.h)
 - JS - пример бота в файле [demo.js](https://github.com/pavelbrnv/BomberMatch/blob/master/BomberMatch/Bombers/Js/demo.js)
 - Python - пример бота в файле [demo.py](https://github.com/pavelbrnv/BomberMatch/blob/master/BomberMatch/Bombers/Python/demo.py)
 
